@@ -1,7 +1,7 @@
 // factories
-const playerFactory = (playerName, playerMarker, playerPoints, playerType) => {
+const playerFactory = (playerName, playerMarker, _playerPoints, playerType) => {
     const playerWon = () => {
-        return playerPoints += 1;
+        return _playerPoints += 1;
     }
 
     return { playerName, playerMarker, playerType, playerWon };
@@ -9,17 +9,19 @@ const playerFactory = (playerName, playerMarker, playerPoints, playerType) => {
 
 // Modules
 const gameBoardController = (function() {
-    let currentBoard = [
+    let _currentBoard = [
         ['', '', ''],
         ['', '', ''],
         ['', '', ''],
     ];
 
+    const getCurrentBoard = () => _currentBoard;
+
     const appendMarker = (posX, posY, marker) =>
     {
         if(!hasMarker(posX, posY))
         {
-            currentBoard[posY][posX] = marker;
+            _currentBoard[posY][posX] = marker;
         }
     };
 
@@ -28,9 +30,25 @@ const gameBoardController = (function() {
         {
             for(let x = 0; x < 3; x++)
             {
-                currentBoard[y][x] = '';
+                _currentBoard[y][x] = '';
             }
         }
+    }
+
+    const checkTie = () => {
+        let tie = true;
+        for(let y = 0; y < 3; y++)
+        {
+            for(let x = 0; x < 3; x++)
+            {
+                if(_currentBoard[y][x] === '')
+                {
+                    tie = false;
+                }
+            }
+        }
+
+        return tie;
     }
 
     const getAdjacent = (posX, posY, marker) => {
@@ -47,20 +65,20 @@ const gameBoardController = (function() {
         {
             if((checkPosY -1) >= 0)
             {
-                if(currentBoard[checkPosY-1][checkPosX-1] === marker)
+                if(_currentBoard[checkPosY-1][checkPosX-1] === marker)
                 {
                     adjacentList.push((checkPosX-1) + "," + (checkPosY-1) + "," + marker);
                 }
             }
 
-            if(currentBoard[checkPosY][checkPosX-1] === marker)
+            if(_currentBoard[checkPosY][checkPosX-1] === marker)
             {
                 adjacentList.push((checkPosX-1) + "," + (checkPosY) + "," + marker);
             }
 
             if((checkPosY +1) <= 2)
             {
-                if(currentBoard[checkPosY+1][checkPosX-1] === marker)
+                if(_currentBoard[checkPosY+1][checkPosX-1] === marker)
                 {
                     adjacentList.push((checkPosX-1) + "," + (checkPosY+1) + "," + marker);
                 }
@@ -69,7 +87,7 @@ const gameBoardController = (function() {
 
         if((checkPosY -1) >= 0)
         {
-            if(currentBoard[checkPosY-1][checkPosX] === marker)
+            if(_currentBoard[checkPosY-1][checkPosX] === marker)
             {
                 adjacentList.push((checkPosX) + "," + (checkPosY-1) + "," + marker);
             }
@@ -77,7 +95,7 @@ const gameBoardController = (function() {
 
         if((checkPosY +1) <= 2)
         {
-            if(currentBoard[checkPosY+1][checkPosX] === marker)
+            if(_currentBoard[checkPosY+1][checkPosX] === marker)
             {
                 adjacentList.push((checkPosX) + "," + (checkPosY+1) + "," + marker);
             }
@@ -87,20 +105,20 @@ const gameBoardController = (function() {
         {
             if((checkPosY -1) >= 0)
             {
-                if(currentBoard[checkPosY-1][checkPosX+1] === marker)
+                if(_currentBoard[checkPosY-1][checkPosX+1] === marker)
                 {
                     adjacentList.push((checkPosX+1) + "," + (checkPosY-1) + "," + marker);
                 }
             }
 
-            if(currentBoard[checkPosY][checkPosX+1] === marker)
+            if(_currentBoard[checkPosY][checkPosX+1] === marker)
             {
                 adjacentList.push((checkPosX+1) + "," + (checkPosY) + "," + marker);
             }
 
             if((checkPosY +1) <= 2)
             {
-                if(currentBoard[checkPosY+1][checkPosX+1] === marker)
+                if(_currentBoard[checkPosY+1][checkPosX+1] === marker)
                 {
                     adjacentList.push((checkPosX+1) + "," + (checkPosY+1) + "," + marker);
                 }
@@ -193,51 +211,57 @@ const gameBoardController = (function() {
         return false;
     }
 
-    const hasMarker = (posX, posY) => (currentBoard[+posY][+posX] !== '');
+    const hasMarker = (posX, posY) => (_currentBoard[+posY][+posX] !== '');
+    const hasMyMarker = (posX, posY, marker) => (_currentBoard[+posY][+posX] === marker);
 
-    return { appendMarker, hasMarker, getAdjacent, makeALine, restartBoard }
+    return { getCurrentBoard, appendMarker, hasMarker, getAdjacent, makeALine, restartBoard, hasMyMarker, checkTie }
 })();
 
 const gameController = (function() {
-    let gamePlayers = [];
-    let currentTurn = 0;
-    let gameStatus = "";
+    let _gamePlayers = [];
+    let _currentTurn = 0;
+    let _gameStatus = "";
 
     const cleanUpPlayers = () => {
-        gamePlayers = [];
+        _gamePlayers = [];
     }
 
     const appendPlayer = (playerName, playerMarker, playerPoints, playerType) => {
-        gamePlayers.push(playerFactory(playerName, playerMarker, playerPoints, playerType));
+        _gamePlayers.push(playerFactory(playerName, playerMarker, playerPoints, playerType));
     }
 
-    const getGameStatus = () => gameStatus;
+    const getGameStatus = () => _gameStatus;
 
     const startGame = () => {
-        currentTurn = 0;
-        gameStatus = "started";
+        _currentTurn = 0;
+        _gameStatus = "started";
     }
 
     const restartGame = () => {
-        currentTurn = 0;
-        gameStatus = "restarted";
+        _currentTurn = 0;
+        _gameStatus = "restarted";
         gameBoardController.restartBoard();
     }
 
-    const nextPlayer = () => gamePlayers[currentTurn];
+    const gameTied = () => {
+        _currentTurn = 0;
+        _gameStatus = "tie";
+    }
+
+    const nextPlayer = () => _gamePlayers[_currentTurn];
 
     const playNextTurn = (posX, posY, playerMarker) => {
-        if(gameStatus !== "finished")
+        if(_gameStatus !== "finished")
         {
 
             if(!gameBoardController.hasMarker(posX, posY))
             {
                 // Valid turn
-                currentTurn += 1;
+                _currentTurn += 1;
 
-                if(currentTurn === gamePlayers.length)
+                if(_currentTurn === _gamePlayers.length)
                 {
-                    currentTurn = 0;
+                    _currentTurn = 0;
                 }
 
                 gameBoardController.appendMarker(posX, posY, playerMarker);
@@ -251,8 +275,14 @@ const gameController = (function() {
         }
     };
 
+    const checkTie = () =>
+    {
+        return gameBoardController.checkTie();
+    }
+
     const checkVictory = (posX, posY, playerMarker) =>
     {
+
         let adjacentBoxes = gameBoardController.getAdjacent(posX, posY, playerMarker);
         if(adjacentBoxes.length > 0)
         {
@@ -280,7 +310,6 @@ const gameController = (function() {
                             return true;
                         }
                     }
-                    return false;
                 }
             }
 
@@ -291,63 +320,112 @@ const gameController = (function() {
     }
 
     const executeVictory = (winner) => {
-        gameStatus = "finished";
+        _gameStatus = "finished";
         winner.playerWon();
     }
 
-    return { getGameStatus, cleanUpPlayers, appendPlayer, nextPlayer, playNextTurn, checkVictory, executeVictory, startGame, restartGame };
+    return { getGameStatus, cleanUpPlayers, appendPlayer, nextPlayer, playNextTurn, checkVictory, checkTie, executeVictory, startGame, restartGame, gameTied };
+})();
+
+const computerAIController = (function() {
+    let _difficulty = "easy";
+
+    const updateDifficulty = (diff) => {
+        _difficulty = diff;
+    }
+
+    const makeNextMove = (marker) => {
+        if(_difficulty === "easy")
+        {
+            let nextRand = _nextRandomPosition();
+            while(nextRand == undefined || nextRand == null)
+            {
+                nextRand = _nextRandomPosition();
+            }
+            return nextRand;
+        } else {
+            let nextRand = _nextRandomPosition();
+            while(nextRand == undefined || nextRand == null)
+            {
+                nextRand = _nextRandomPosition();
+            }
+            return nextRand;
+        }
+    }
+
+    const _nextRandomPosition = () => {
+        let randomX = Math.floor(Math.random() * 3);
+        let randomY = Math.floor(Math.random() * 3);
+        let result = [];
+
+        if(gameBoardController.hasMarker(randomX, randomY))
+        {
+            _nextRandomPosition();
+        } else {
+            result.push(randomX);
+            result.push(randomY);
+            return result;
+        }
+    }
+
+    return { updateDifficulty, makeNextMove };
+
 })();
 
 const mainController = (function(doc) {
-    let gameOpponent;
-    let gameMarker;
-    let gamePlayerName, gamePlayerTwoName;
+    let _gameOpponent;
+    let _gameMarker;
+    let _gamePlayerName, _gamePlayerTwoName;
     const gameCaption = doc.querySelector('.content-box-caption');
 
     const registerOpponentSelection = () => {
         const selectComputer = doc.querySelector('#selectComputer');
         const selectPlayer = doc.querySelector('#selectPlayer');
 
-        selectComputer.addEventListener("click", clickHandler);
-        selectPlayer.addEventListener("click", clickHandler);
+        selectComputer.addEventListener("click", _clickHandler);
+        selectPlayer.addEventListener("click", _clickHandler);
     };
 
-    const clickHandler = (event) => {
+    const _clickHandler = (event) => {
         if(event.target.id === "selectComputer")
         {
-            gameOpponent = "computer";
-            appendPlayerMarker();
+            _gameOpponent = "computer";
+            _appendPlayerMarker();
         } else if(event.target.id === "selectPlayer")
         {
-            gameOpponent = "player";
-            appendPlayerMarker();
+            _gameOpponent = "player";
+            _appendPlayerMarker();
         } else if(event.target.id === "selectX")
         {
-            gameMarker = "X";
-            appendPlayerNames();
+            _gameMarker = "X";
+            _appendPlayerNames();
         } else if(event.target.id === "selectO")
         {
-            gameMarker = "O";
-            appendPlayerNames();
+            _gameMarker = "O";
+            _appendPlayerNames();
         } else if(event.target.id === "restartGame")
         {
-            restartGame();
+            _restartGame();
         } else if(event.target.id === "diffEasy")
         {
             const diffCaption = document.querySelector('.content-box-difficulty-caption');
             diffCaption.textContent = "Computer difficulty: EASY";
+            computerAIController.updateDifficulty("easy");
         } else if(event.target.id === "diffMedium")
         {
             const diffCaption = document.querySelector('.content-box-difficulty-caption');
             diffCaption.textContent = "Computer difficulty: MEDIUM";
+            computerAIController.updateDifficulty("medium");
         } else if(event.target.id === "diffHard")
         {
             const diffCaption = document.querySelector('.content-box-difficulty-caption');
             diffCaption.textContent = "Computer difficulty: HARD";
+            computerAIController.updateDifficulty("hard");
         } else if(event.target.id === "diffUnbeatable")
         {
             const diffCaption = document.querySelector('.content-box-difficulty-caption');
             diffCaption.textContent = "Computer difficulty: UNBEATABLE";
+            computerAIController.updateDifficulty("unbeatable");
         } else if(event.target.id === "selectNames")
         {
             const playerOne = document.querySelector('#playerOneName');
@@ -366,9 +444,9 @@ const mainController = (function(doc) {
                 return;
             }
 
-            gamePlayerName = playerOne.value;
+            _gamePlayerName = playerOne.value;
 
-            if(gameOpponent !== "computer")
+            if(_gameOpponent !== "computer")
             {
                 const playerTwo = document.querySelector('#playerTwoName');
                 const playerTwoError = document.querySelector('#playerTwoNameError');
@@ -386,10 +464,10 @@ const mainController = (function(doc) {
                     return;
                 }
 
-                gamePlayerTwoName = playerTwo.value;
+                _gamePlayerTwoName = playerTwo.value;
             }
 
-            startGame();
+            _startGame();
 
         } else if(event.target.classList.contains("box") && event.target.getAttribute("data-position").includes(","))
         {
@@ -400,27 +478,47 @@ const mainController = (function(doc) {
 
             let currentPlayer = gameController.nextPlayer();
             let position = event.target.getAttribute("data-position").split(',');
-            if(gameController.playNextTurn(position[0], position[1], currentPlayer.playerMarker))
-            {
-                if(event.target.classList.contains("hov"))
-                {
-                    event.target.classList.remove("hov");
-                }
-
-                event.target.textContent = currentPlayer.playerMarker;
-                if(gameController.checkVictory(position[0], position[1], currentPlayer.playerMarker))
-                {
-                    gameController.executeVictory(currentPlayer);
-                    notifyVictory(currentPlayer);
-                } else {
-                    gameCaption.textContent = `It's ${gameController.nextPlayer().playerName}'s turn`;
-
-                }
-            }
+            
+            _executeNextMovement((+position[0]), (+position[1]), currentPlayer, event.target);
         }
     }
 
-    const appendPlayerMarker = () => {
+    const _executeNextMovement = (posX, posY, currentPlayer, target) =>
+    {
+        if(gameController.playNextTurn(posX, posY, currentPlayer.playerMarker))
+        {
+            if(target.classList.contains("hov"))
+            {
+                target.classList.remove("hov");
+            }
+
+            target.textContent = currentPlayer.playerMarker;
+            if(gameController.checkVictory(posX, posY, currentPlayer.playerMarker))
+            {
+                gameController.executeVictory(currentPlayer);
+                _notifyVictory(currentPlayer);
+            } else if(gameController.checkTie())
+            {
+                gameController.gameTied();
+                gameCaption.textContent = `It's a tie!`;
+            } else {
+                gameCaption.textContent = `It's ${gameController.nextPlayer().playerName}'s turn`;
+
+                // check if next turn is computer's turn
+                if(gameController.nextPlayer().playerType === "computer")
+                {
+                    // Do next move
+                    let computerPlayer = gameController.nextPlayer();
+                    let computerMovement = computerAIController.makeNextMove(computerPlayer.playerMarker);
+                    let computerTarget = doc.querySelector(`.box[data-position="${computerMovement[0]},${computerMovement[1]}"]`);
+
+                    _executeNextMovement(computerMovement[0], computerMovement[1], computerPlayer, computerTarget);
+                }
+            }
+        }
+    };
+
+    const _appendPlayerMarker = () => {
         const selectParent = doc.querySelector('.content-box-select');
         // clean up children
         let child = selectParent.lastElementChild; 
@@ -433,14 +531,14 @@ const mainController = (function(doc) {
         let crossMarker = document.createElement("div");
         crossMarker.classList.add("content-box-select-button");
         crossMarker.setAttribute("id", "selectX");
-        crossMarker.addEventListener("click", clickHandler);
+        crossMarker.addEventListener("click", _clickHandler);
         crossMarker.textContent = "X"; 
         selectParent.appendChild(crossMarker);
 
         let circleMarker = document.createElement("div");
         circleMarker.classList.add("content-box-select-button");
         circleMarker.setAttribute("id", "selectO");
-        circleMarker.addEventListener("click", clickHandler);
+        circleMarker.addEventListener("click", _clickHandler);
         circleMarker.textContent = "O"; 
         selectParent.appendChild(circleMarker);
 
@@ -448,7 +546,7 @@ const mainController = (function(doc) {
 
     }
 
-    const appendPlayerNames = () => {
+    const _appendPlayerNames = () => {
         const selectParent = doc.querySelector('.content-box-select');
         // clean up children
         let child = selectParent.lastElementChild; 
@@ -475,7 +573,7 @@ const mainController = (function(doc) {
         selectNameBox.appendChild(selectNameError);
         selectParent.appendChild(selectNameBox);
 
-        if(gameOpponent !== "computer")
+        if(_gameOpponent !== "computer")
         {
             let selectSecondNameBox = document.createElement("div");
             selectSecondNameBox.classList.add("content-box-select-box");
@@ -500,7 +598,7 @@ const mainController = (function(doc) {
         let selectNamesButton = document.createElement("div");
         selectNamesButton.classList.add("content-box-select-button");
         selectNamesButton.setAttribute("id", "selectNames");
-        selectNamesButton.addEventListener("click", clickHandler);
+        selectNamesButton.addEventListener("click", _clickHandler);
         selectNamesButton.textContent = "Select names"; 
         endParent.appendChild(selectNamesButton);
 
@@ -508,7 +606,7 @@ const mainController = (function(doc) {
 
     }
 
-    const restartGame = () => {
+    const _restartGame = () => {
         // restart boxes
         const boxes = doc.querySelectorAll('.box');
         
@@ -526,7 +624,7 @@ const mainController = (function(doc) {
         gameCaption.textContent = `It's ${gameController.nextPlayer().playerName}'s turn`;
     }
 
-    const startGame = () => {
+    const _startGame = () => {
         const endParent = doc.querySelector('.content-box-end');
         // clean up children
         let child = endParent.lastElementChild; 
@@ -538,11 +636,11 @@ const mainController = (function(doc) {
         let restartButton = document.createElement("div");
         restartButton.classList.add("content-box-select-button");
         restartButton.setAttribute("id", "restartGame");
-        restartButton.addEventListener("click", clickHandler);
+        restartButton.addEventListener("click", _clickHandler);
         restartButton.textContent = "Restart"; 
         endParent.appendChild(restartButton);
 
-        if(gameOpponent === "computer")
+        if(_gameOpponent === "computer")
         {
             let difficultyBoxCaption = document.createElement("div");
             difficultyBoxCaption.classList.add("content-box-difficulty-caption");
@@ -555,28 +653,28 @@ const mainController = (function(doc) {
             let easyButton = document.createElement("div");
             easyButton.classList.add("content-box-select-button");
             easyButton.setAttribute("id", "diffEasy");
-            easyButton.addEventListener("click", clickHandler);
+            easyButton.addEventListener("click", _clickHandler);
             easyButton.textContent = "Easy"; 
             difficultyBox.appendChild(easyButton);
 
             let mediumButton = document.createElement("div");
             mediumButton.classList.add("content-box-select-button");
             mediumButton.setAttribute("id", "diffMedium");
-            mediumButton.addEventListener("click", clickHandler);
+            mediumButton.addEventListener("click", _clickHandler);
             mediumButton.textContent = "Medium"; 
             difficultyBox.appendChild(mediumButton);
 
             let hardButton = document.createElement("div");
             hardButton.classList.add("content-box-select-button");
             hardButton.setAttribute("id", "diffHard");
-            hardButton.addEventListener("click", clickHandler);
+            hardButton.addEventListener("click", _clickHandler);
             hardButton.textContent = "Hard"; 
             difficultyBox.appendChild(hardButton);
 
             let unbeatableButton = document.createElement("div");
             unbeatableButton.classList.add("content-box-select-button");
             unbeatableButton.setAttribute("id", "diffUnbeatable");
-            unbeatableButton.addEventListener("click", clickHandler);
+            unbeatableButton.addEventListener("click", _clickHandler);
             unbeatableButton.textContent = "Unbeatable"; 
             difficultyBox.appendChild(unbeatableButton);
 
@@ -585,8 +683,8 @@ const mainController = (function(doc) {
 
         // cleanup (just in case) & append players
         gameController.cleanUpPlayers();
-        gameController.appendPlayer(gamePlayerName, (gameMarker === "O") ? "O" : "X", 0, "player");
-        gameController.appendPlayer((gameOpponent === "computer") ? "Computer" : gamePlayerTwoName, (gameMarker !== "O") ? "O" : "X", 0, (gameOpponent === "computer") ? "computer" : "player");
+        gameController.appendPlayer(_gamePlayerName, (_gameMarker === "O") ? "O" : "X", 0, "player");
+        gameController.appendPlayer((_gameOpponent === "computer") ? "Computer" : _gamePlayerTwoName, (_gameMarker !== "O") ? "O" : "X", 0, (_gameOpponent === "computer") ? "computer" : "player");
 
         const selectBox = doc.querySelector('.content-box-select');
         selectBox.style['display'] = 'none';
@@ -603,7 +701,7 @@ const mainController = (function(doc) {
                 gameSquare.classList.add("box");
                 gameSquare.classList.add("hov");
                 gameSquare.setAttribute("data-position", x + "," + y);
-                gameSquare.addEventListener("click", clickHandler);
+                gameSquare.addEventListener("click", _clickHandler);
                 // border logic
                 gameSquare.style["border"] = "2px solid #132544";
                 if(y === 0)
@@ -632,7 +730,7 @@ const mainController = (function(doc) {
 
     }
 
-    const notifyVictory = (winner) => {
+    const _notifyVictory = (winner) => {
         gameCaption.textContent = `${winner.playerName} WON!`;
     };
 
