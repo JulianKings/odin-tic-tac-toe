@@ -284,6 +284,17 @@ const gameController = (function() {
     {
 
         let adjacentBoxes = gameBoardController.getAdjacent(posX, posY, playerMarker);
+        if(adjacentBoxes.length === 2)
+        {
+            // check for a line with these 3
+            let firstSplit = adjacentBoxes[0].split(',');
+            let secondSplit = adjacentBoxes[1].split(',');
+
+            if(gameBoardController.makeALine((+posX), (+posY), (+firstSplit[0]), (+firstSplit[1]), (+secondSplit[0]), (+secondSplit[1])))
+            {
+                return true;
+            }
+        }
         if(adjacentBoxes.length > 0)
         {
             for(const box of adjacentBoxes)
@@ -343,13 +354,83 @@ const computerAIController = (function() {
                 nextRand = _nextRandomPosition();
             }
             return nextRand;
-        } else {
-            let nextRand = _nextRandomPosition();
-            while(nextRand == undefined || nextRand == null)
+        } else if(_difficulty === "medium") {
+            let nextMove = null;
+            // check for winning movement
+            for(let x = 0; x < 3; x++)
             {
-                nextRand = _nextRandomPosition();
+                for(let y = 0; y < 3; y++)
+                {
+                    if(gameController.checkVictory(x, y, marker))
+                    {
+                        nextMove = [];
+                        nextMove.push(x);
+                        nextMove.push(y);
+                    }
+                }
             }
-            return nextRand;
+
+            if(nextMove !== null)
+            {
+                return nextMove;
+            } else {
+                nextMove = _nextRandomPosition();
+                while(nextMove == undefined || nextMove == null)
+                {
+                    nextMove = _nextRandomPosition();
+                }
+                return nextMove;
+            }
+        } else {
+            let nextMove = null;
+            // check for winning movement
+            winloop: for(let x = 0; x < 3; x++)
+            {
+                for(let y = 0; y < 3; y++)
+                {
+                    if(!gameBoardController.hasMarker(x, y))
+                    {
+                        if(gameController.checkVictory(x, y, marker))
+                        {
+                            nextMove = [];
+                            nextMove.push(x);
+                            nextMove.push(y);
+                            break winloop;
+                        }
+                    }
+                }
+            }
+
+            // check for enemy win
+            let enemyMarker = (marker === "O") ? "X" : "O";
+            loseloop: for(let z = 0; z < 3; z++)
+            {
+                for(let m = 0; m < 3; m++)
+                {
+                    if(!gameBoardController.hasMarker(z, m))
+                    {
+                        if(gameController.checkVictory(z, m, enemyMarker))
+                        {
+                            nextMove = [];
+                            nextMove.push(z);
+                            nextMove.push(m);
+                            break loseloop;
+                        }
+                    }
+                }
+            }
+
+            if(nextMove !== null)
+            {
+                return nextMove;
+            } else {
+                nextMove = _nextRandomPosition();
+                while(nextMove == undefined || nextMove == null)
+                {
+                    nextMove = _nextRandomPosition();
+                }
+                return nextMove;
+            }
         }
     }
 
