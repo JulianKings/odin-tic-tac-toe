@@ -1,0 +1,141 @@
+body, html {
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Roboto', sans-serif;
+    font-size: 1.1rem;
+}
+
+.content {
+    background-color: #e5e7eb;
+    color: black;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.content-title {
+    font-size: 3rem;
+    font-weight: bold;
+    margin-bottom: 1rem;
+    color: #132544;
+    position: relative;
+    top: -3rem;
+}
+
+.content-box {
+    width: min(45rem, 60%);
+    background-color: white;
+    border-radius: 0.4rem;
+    box-shadow: 0.1rem 0.3em 0.5rem rgb(0, 0, 0, 0.1);
+    display: grid;
+    grid: 3rem 1fr 0.4fr / 1fr;
+    justify-content: center;
+    justify-items: center;
+    gap: 0.5rem;
+    padding: 1rem 3rem;
+    position: relative;
+    top: -3rem;
+}
+
+.content-box-select {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.content-box-select-box {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.6rem;
+}
+
+.content-box-select-box input {
+    padding: 0.3rem;
+    border: 1px solid rgb(0, 0, 0, 0.5);
+    border-radius: 0.2rem;
+}
+
+.content-box-select-box-input-error
+{
+    border-color: #500000;
+}
+
+.content-box-select-box-error {
+    color: #500000;
+    font-size: 0.9rem;
+}
+
+.content-box-select-button {
+    background-color: #132544;
+    padding: 0.6rem 1rem;
+    border-radius: 0.4rem;
+    color: white;
+    user-select: none;
+}
+
+.content-box-select-button:hover {
+    background-color: #0f1b30;
+    box-shadow: 0.1rem 0.2em 0.3rem rgb(0, 0, 0, 0.1);
+}
+
+.content-box-select-button:active {
+    background-color: #0e1727;
+    box-shadow: 0.1rem 0.2em 0.3rem rgb(0, 0, 0, 0.1);
+}
+
+.content-box-game
+{
+    width: 90%;
+    display: none;
+    grid: repeat(3, auto) / repeat(3, 30%);
+    justify-content: center;
+    align-items: stretch;
+    justify-items: stretch;
+}
+
+.content-box-game .box {
+    aspect-ratio: 1 / 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    font-size: 10vw;
+}
+
+.content-box-game .hov:hover {
+    background-color: rgb(229, 231, 235, 0.6);
+}
+
+.content-box-end {
+    align-self: end;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.content-box-difficulty-caption
+{
+    margin-top: 0.6rem;;
+}
+
+.content-box-difficulty
+{
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+}
