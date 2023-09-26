@@ -51,9 +51,8 @@ const gameBoardController = (function() {
         // try all adjacent boxes
         for(position of getMarkedSpots(board, marker))
         {
-            let splitter = position.split(',');
-            let sPosX = +splitter[0];
-            let sPosY = +splitter[1];
+            let sPosX = +position[0];
+            let sPosY = +position[1];
 
             if((sPosX - 1) === checkPosX || (sPosY-1) === checkPosY || 
             (sPosX + 1) === checkPosX || (sPosY+1) === checkPosY)
@@ -75,7 +74,7 @@ const gameBoardController = (function() {
             {
                 if(board[y][x] === marker)
                 {
-                    availableSpots.push(`${x},${y}`);
+                    availableSpots.push([x,y]);
                 }
             }
         }
@@ -241,27 +240,24 @@ const gameController = (function() {
         {
             for(position of markedSpots)
             {
-                let splitter = position.split(',');
-                let posX = +splitter[0];
-                let posY = +splitter[1];
+                let posX = +position[0];
+                let posY = +position[1];
 
                 let adjacentBoxes = gameBoardController.getAdjacent(posX, posY, playerMarker, board);
                 if(adjacentBoxes.length > 0)
                 {
                     for(box of adjacentBoxes)
                     {
-                        let split = box.split(',');
-                        let secondaryPosX = +split[0];
-                        let secondaryPosY = +split[1];
+                        let secondaryPosX = +box[0];
+                        let secondaryPosY = +box[1];
                         let secondaryAdjacentBoxes = gameBoardController.getAdjacent(secondaryPosX, secondaryPosY, playerMarker, board);
                         if(secondaryAdjacentBoxes.length > 0)
                         {
                             // probable winner, check if it's in a line
                             for(adjBox of secondaryAdjacentBoxes)
                             {
-                                let adjSplit = adjBox.split(',');
-                                let tPosX = +adjSplit[0];
-                                let tPosY = +adjSplit[1];
+                                let tPosX = +adjBox[0];
+                                let tPosY = +adjBox[1];
 
                                 if(tPosX === posX && tPosY === posY)
                                 {
@@ -278,7 +274,6 @@ const gameController = (function() {
                         }
                     }
                 }
-                return false;
             }
         } else {
             return false;
@@ -314,9 +309,8 @@ const computerAIController = (function() {
             // check for winning movement
             for(position of gameBoardController.getAvailableSpots(gameBoardController.getCurrentBoard()))
             {
-                let split = position.split(',');
-                let x = +split[0];
-                let y = +split[1];
+                let x = +position[0];
+                let y = +position[1];
                 let replicateBoard = _replicateCurrentBoard(gameBoardController.getCurrentBoard());
                 replicateBoard[x][y] = marker;
                 if(gameController.checkVictory(marker, replicateBoard))
@@ -343,9 +337,8 @@ const computerAIController = (function() {
             // check for winning movement
             for(position of gameBoardController.getAvailableSpots(gameBoardController.getCurrentBoard()))
             {
-                let split = position.split(',');
-                let x = +split[0];
-                let y = +split[1];
+                let x = +position[0];
+                let y = +position[1];
                 let replicateBoard = _replicateCurrentBoard(gameBoardController.getCurrentBoard());
                 replicateBoard[x][y] = marker;
                 if(gameController.checkVictory(marker, replicateBoard))
@@ -360,9 +353,8 @@ const computerAIController = (function() {
             let enemyMarker = (marker === "O") ? "X" : "O";
             for(position of gameBoardController.getAvailableSpots(gameBoardController.getCurrentBoard()))
             {
-                let split = position.split(',');
-                let x = +split[0];
-                let y = +split[1];
+                let x = +position[0];
+                let y = +position[1];
                 let replicateBoard = _replicateCurrentBoard(gameBoardController.getCurrentBoard());
                 replicateBoard[x][y] = enemyMarker;
                 if(gameController.checkVictory(enemyMarker, replicateBoard))
@@ -416,9 +408,8 @@ const computerAIController = (function() {
         let currentPath = [];
         for(position of availableSpots)
         {
-            let split = position.split(',');
-            let x = +split[0];
-            let y = +split[1];
+            let x = +position[0];
+            let y = +position[1];
 
             let move = movementFactory(board[y][x], x, y, 0);
             board[y][x] = marker;
