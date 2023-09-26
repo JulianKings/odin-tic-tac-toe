@@ -31,7 +31,7 @@ body {
 }
 
 .content-box {
-    width: min(45rem, 60%);
+    width: min(35rem, 60%);
     background-color: white;
     border-radius: 0.4rem;
     box-shadow: 0.1rem 0.3em 0.5rem rgb(0, 0, 0, 0.1);
