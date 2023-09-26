@@ -236,49 +236,53 @@ const gameController = (function() {
 
     const checkVictory = (playerMarker, board) =>
     {
-        for(position of gameBoardController.getMarkedSpots(board, playerMarker))
+        let markedSpots = gameBoardController.getMarkedSpots(board, playerMarker);
+        if(markedSpots.length > 2)
         {
-            let splitter = position.split(',');
-            let posX = +splitter[0];
-            let posY = +splitter[1];
-
-            let adjacentBoxes = gameBoardController.getAdjacent(posX, posY, playerMarker, board);
-            if(adjacentBoxes.length > 0)
+            for(position of markedSpots)
             {
-                for(box of adjacentBoxes)
+                let splitter = position.split(',');
+                let posX = +splitter[0];
+                let posY = +splitter[1];
+
+                let adjacentBoxes = gameBoardController.getAdjacent(posX, posY, playerMarker, board);
+                if(adjacentBoxes.length > 0)
                 {
-                    let split = box.split(',');
-                    let secondaryPosX = +split[0];
-                    let secondaryPosY = +split[1];
-                    let secondaryAdjacentBoxes = gameBoardController.getAdjacent(secondaryPosX, secondaryPosY, playerMarker, board);
-                    if(secondaryAdjacentBoxes.length > 0)
+                    for(box of adjacentBoxes)
                     {
-                        // probable winner, check if it's in a line
-                        for(adjBox of secondaryAdjacentBoxes)
+                        let split = box.split(',');
+                        let secondaryPosX = +split[0];
+                        let secondaryPosY = +split[1];
+                        let secondaryAdjacentBoxes = gameBoardController.getAdjacent(secondaryPosX, secondaryPosY, playerMarker, board);
+                        if(secondaryAdjacentBoxes.length > 0)
                         {
-                            let adjSplit = adjBox.split(',');
-                            let tPosX = +adjSplit[0];
-                            let tPosY = +adjSplit[1];
-
-                            if(tPosX === posX && tPosY === posY)
+                            // probable winner, check if it's in a line
+                            for(adjBox of secondaryAdjacentBoxes)
                             {
-                                // ignore original pos
-                                continue;
-                            }
+                                let adjSplit = adjBox.split(',');
+                                let tPosX = +adjSplit[0];
+                                let tPosY = +adjSplit[1];
 
-                            if(gameBoardController.makeALine((+posX), (+posY), (+secondaryPosX), (+secondaryPosY), (+tPosX), (+tPosY)))
-                            {
-                                // We won!
-                                return true;
+                                if(tPosX === posX && tPosY === posY)
+                                {
+                                    // ignore original pos
+                                    continue;
+                                }
+
+                                if(gameBoardController.makeALine((+posX), (+posY), (+secondaryPosX), (+secondaryPosY), (+tPosX), (+tPosY)))
+                                {
+                                    // We won!
+                                    return true;
+                                }
                             }
                         }
                     }
                 }
+                return false;
             }
-
+        } else {
+            return false;
         }
-
-        return false;
     }
 
     const executeVictory = (winner) => {
@@ -388,14 +392,13 @@ const computerAIController = (function() {
 
     const _minimaxCalc = (marker) =>
     {
-        let currentBoardCopy = _replicateCurrentBoard(gameBoardController.getCurrentBoard());
         let moveSet = [];
-        let splitter = _minimaxCalcBestPath(marker, marker, currentBoardCopy);
+        let splitter = _minimaxCalcBestPath(marker, marker, gameBoardController.getCurrentBoard());
         moveSet.push(splitter.x);
         moveSet.push(splitter.y);
         return moveSet;
     }
-
+6
     const _minimaxCalcBestPath = (marker, original_marker, board) =>
     {
         let availableSpots = gameBoardController.getAvailableSpots(board);
