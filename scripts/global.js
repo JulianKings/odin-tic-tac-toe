@@ -7,6 +7,11 @@ const playerFactory = (playerName, playerMarker, _playerPoints, playerType) => {
     return { playerName, playerMarker, playerType, playerWon };
 };
 
+const movementFactory = (movement, x, y, score) =>
+{
+    return { movement, x, y, score }
+};
+
 // Modules
 const gameBoardController = (function() {
     let _currentBoard = [
@@ -35,97 +40,47 @@ const gameBoardController = (function() {
         }
     }
 
-    const checkTie = () => {
-        let tie = true;
-        for(let y = 0; y < 3; y++)
-        {
-            for(let x = 0; x < 3; x++)
-            {
-                if(_currentBoard[y][x] === '')
-                {
-                    tie = false;
-                }
-            }
-        }
+    const checkTie = (board) => getAvailableSpots(board).length === 0;
 
-        return tie;
-    }
-
-    const getAdjacent = (posX, posY, marker) => {
+    const getAdjacent = (posX, posY, marker, board) => {
         let adjacentList = [];
         // make sure x and y are numbers
         let checkPosX = +posX;
         let checkPosY = +posY;
 
         // try all adjacent boxes
-        // x-1 & y-1   y-1     x+1 & y-1
-        // x-1          -          x+1
-        // x-1 & y+1   y-1     x+1 & y+1
-        if((checkPosX - 1) >= 0)
+        for(position of getMarkedSpots(board, marker))
         {
-            if((checkPosY -1) >= 0)
-            {
-                if(_currentBoard[checkPosY-1][checkPosX-1] === marker)
-                {
-                    adjacentList.push((checkPosX-1) + "," + (checkPosY-1) + "," + marker);
-                }
-            }
+            let splitter = position.split(',');
+            let sPosX = +splitter[0];
+            let sPosY = +splitter[1];
 
-            if(_currentBoard[checkPosY][checkPosX-1] === marker)
+            if((sPosX - 1) === checkPosX || (sPosY-1) === checkPosY || 
+            (sPosX + 1) === checkPosX || (sPosY+1) === checkPosY)
             {
-                adjacentList.push((checkPosX-1) + "," + (checkPosY) + "," + marker);
-            }
-
-            if((checkPosY +1) <= 2)
-            {
-                if(_currentBoard[checkPosY+1][checkPosX-1] === marker)
-                {
-                    adjacentList.push((checkPosX-1) + "," + (checkPosY+1) + "," + marker);
-                }
-            }
-        }
-
-        if((checkPosY -1) >= 0)
-        {
-            if(_currentBoard[checkPosY-1][checkPosX] === marker)
-            {
-                adjacentList.push((checkPosX) + "," + (checkPosY-1) + "," + marker);
-            }
-        }
-
-        if((checkPosY +1) <= 2)
-        {
-            if(_currentBoard[checkPosY+1][checkPosX] === marker)
-            {
-                adjacentList.push((checkPosX) + "," + (checkPosY+1) + "," + marker);
-            }
-        }
-
-        if((checkPosX + 1) <= 2)
-        {
-            if((checkPosY -1) >= 0)
-            {
-                if(_currentBoard[checkPosY-1][checkPosX+1] === marker)
-                {
-                    adjacentList.push((checkPosX+1) + "," + (checkPosY-1) + "," + marker);
-                }
-            }
-
-            if(_currentBoard[checkPosY][checkPosX+1] === marker)
-            {
-                adjacentList.push((checkPosX+1) + "," + (checkPosY) + "," + marker);
-            }
-
-            if((checkPosY +1) <= 2)
-            {
-                if(_currentBoard[checkPosY+1][checkPosX+1] === marker)
-                {
-                    adjacentList.push((checkPosX+1) + "," + (checkPosY+1) + "," + marker);
-                }
+                adjacentList.push(position);
             }
         }
 
         return adjacentList;
+    }
+
+    const getAvailableSpots = (board) => getMarkedSpots(board, '');
+
+    const getMarkedSpots = (board, marker) => {
+        let availableSpots = [];
+        for(let y = 0; y < board.length; y++)
+        {
+            for(let x = 0; x < board[y].length; x++)
+            {
+                if(board[y][x] === marker)
+                {
+                    availableSpots.push(`${x},${y}`);
+                }
+            }
+        }
+
+        return availableSpots;
     }
 
     const makeALine = (posX, posY, posX2, posY2, posX3, posY3) => {
@@ -212,9 +167,8 @@ const gameBoardController = (function() {
     }
 
     const hasMarker = (posX, posY) => (_currentBoard[+posY][+posX] !== '');
-    const hasMyMarker = (posX, posY, marker) => (_currentBoard[+posY][+posX] === marker);
-
-    return { getCurrentBoard, appendMarker, hasMarker, getAdjacent, makeALine, restartBoard, hasMyMarker, checkTie }
+    
+    return { getCurrentBoard, appendMarker, hasMarker, getAdjacent, makeALine, restartBoard, checkTie, getAvailableSpots, getMarkedSpots }
 })();
 
 const gameController = (function() {
@@ -277,54 +231,51 @@ const gameController = (function() {
 
     const checkTie = () =>
     {
-        return gameBoardController.checkTie();
+        return gameBoardController.checkTie(gameBoardController.getCurrentBoard());
     }
 
-    const checkVictory = (posX, posY, playerMarker) =>
+    const checkVictory = (playerMarker, board) =>
     {
-
-        let adjacentBoxes = gameBoardController.getAdjacent(posX, posY, playerMarker);
-        if(adjacentBoxes.length === 2)
+        for(position of gameBoardController.getMarkedSpots(board, playerMarker))
         {
-            // check for a line with these 3
-            let firstSplit = adjacentBoxes[0].split(',');
-            let secondSplit = adjacentBoxes[1].split(',');
+            let splitter = position.split(',');
+            let posX = +splitter[0];
+            let posY = +splitter[1];
 
-            if(gameBoardController.makeALine((+posX), (+posY), (+firstSplit[0]), (+firstSplit[1]), (+secondSplit[0]), (+secondSplit[1])))
+            let adjacentBoxes = gameBoardController.getAdjacent(posX, posY, playerMarker, board);
+            if(adjacentBoxes.length > 0)
             {
-                return true;
-            }
-        }
-        if(adjacentBoxes.length > 0)
-        {
-            for(const box of adjacentBoxes)
-            {
-                let split = box.split(',');
-                let secondaryAdjacentBoxes = gameBoardController.getAdjacent(split[0], split[1], split[2]);
-                
-                // clean up origin box
-                if(secondaryAdjacentBoxes.includes((+posX) + "," + (+posY) + "," + playerMarker))
+                for(box of adjacentBoxes)
                 {
-                    let index = secondaryAdjacentBoxes.indexOf((+posX) + "," + (+posY) + "," + playerMarker);
-                    secondaryAdjacentBoxes.splice(index, 1);
-                }
-
-                if(secondaryAdjacentBoxes.length > 0)
-                {
-                    // probable winner, check if it's in a line
-                    for(const adjBox of secondaryAdjacentBoxes)
+                    let split = box.split(',');
+                    let secondaryPosX = +split[0];
+                    let secondaryPosY = +split[1];
+                    let secondaryAdjacentBoxes = gameBoardController.getAdjacent(secondaryPosX, secondaryPosY, playerMarker, board);
+                    if(secondaryAdjacentBoxes.length > 0)
                     {
-                        let adjSplit = adjBox.split(',');
-                        if(gameBoardController.makeALine((+posX), (+posY), (+split[0]), (+split[1]), (+adjSplit[0]), (+adjSplit[1])))
+                        // probable winner, check if it's in a line
+                        for(adjBox of secondaryAdjacentBoxes)
                         {
-                            // We won!
-                            return true;
+                            let adjSplit = adjBox.split(',');
+                            let tPosX = +adjSplit[0];
+                            let tPosY = +adjSplit[1];
+
+                            if(tPosX === posX && tPosY === posY)
+                            {
+                                // ignore original pos
+                                continue;
+                            }
+
+                            if(gameBoardController.makeALine((+posX), (+posY), (+secondaryPosX), (+secondaryPosY), (+tPosX), (+tPosY)))
+                            {
+                                // We won!
+                                return true;
+                            }
                         }
                     }
                 }
             }
 
-            return false;
         }
 
         return false;
@@ -357,16 +308,64 @@ const computerAIController = (function() {
         } else if(_difficulty === "medium") {
             let nextMove = null;
             // check for winning movement
-            for(let x = 0; x < 3; x++)
+            for(position of gameBoardController.getAvailableSpots(gameBoardController.getCurrentBoard()))
             {
-                for(let y = 0; y < 3; y++)
+                let split = position.split(',');
+                let x = +split[0];
+                let y = +split[1];
+                let replicateBoard = _replicateCurrentBoard(gameBoardController.getCurrentBoard());
+                replicateBoard[x][y] = marker;
+                if(gameController.checkVictory(marker, replicateBoard))
                 {
-                    if(gameController.checkVictory(x, y, marker))
-                    {
-                        nextMove = [];
-                        nextMove.push(x);
-                        nextMove.push(y);
-                    }
+                    nextMove = [];
+                    nextMove.push(x);
+                    nextMove.push(y);
+                }
+            }
+
+            if(nextMove !== null)
+            {
+                return nextMove;
+            } else {
+                nextMove = _nextRandomPosition();
+                while(nextMove == undefined || nextMove == null)
+                {
+                    nextMove = _nextRandomPosition();
+                }
+                return nextMove;
+            }
+        } else if(_difficulty === "hard") {
+            let nextMove = null;
+            // check for winning movement
+            for(position of gameBoardController.getAvailableSpots(gameBoardController.getCurrentBoard()))
+            {
+                let split = position.split(',');
+                let x = +split[0];
+                let y = +split[1];
+                let replicateBoard = _replicateCurrentBoard(gameBoardController.getCurrentBoard());
+                replicateBoard[x][y] = marker;
+                if(gameController.checkVictory(marker, replicateBoard))
+                {
+                    nextMove = [];
+                    nextMove.push(x);
+                    nextMove.push(y);
+                }
+            }
+
+            // check for enemy win
+            let enemyMarker = (marker === "O") ? "X" : "O";
+            for(position of gameBoardController.getAvailableSpots(gameBoardController.getCurrentBoard()))
+            {
+                let split = position.split(',');
+                let x = +split[0];
+                let y = +split[1];
+                let replicateBoard = _replicateCurrentBoard(gameBoardController.getCurrentBoard());
+                replicateBoard[x][y] = enemyMarker;
+                if(gameController.checkVictory(enemyMarker, replicateBoard))
+                {
+                    nextMove = [];
+                    nextMove.push(x);
+                    nextMove.push(y);
                 }
             }
 
@@ -382,56 +381,89 @@ const computerAIController = (function() {
                 return nextMove;
             }
         } else {
-            let nextMove = null;
-            // check for winning movement
-            winloop: for(let x = 0; x < 3; x++)
+            // check for winning movement                
+            return _minimaxCalc(marker);
+        }
+    }
+
+    const _minimaxCalc = (marker) =>
+    {
+        let currentBoardCopy = _replicateCurrentBoard(gameBoardController.getCurrentBoard());
+        let moveSet = [];
+        let splitter = _minimaxCalcBestPath(marker, marker, currentBoardCopy);
+        moveSet.push(splitter.x);
+        moveSet.push(splitter.y);
+        return moveSet;
+    }
+
+    const _minimaxCalcBestPath = (marker, original_marker, board) =>
+    {
+        let availableSpots = gameBoardController.getAvailableSpots(board);
+        if(gameController.checkVictory(original_marker, board))
+        {
+            return { score: 10 };
+        } else if(gameController.checkVictory(((original_marker === "O") ? "X" : "O"), board))
+        {
+            return { score: -10};
+        } else if(availableSpots.length === 0)
+        {
+            return { score: 0 };
+        }
+
+        let currentPath = [];
+        for(position of availableSpots)
+        {
+            let split = position.split(',');
+            let x = +split[0];
+            let y = +split[1];
+
+            let move = movementFactory(board[y][x], x, y, 0);
+            board[y][x] = marker;
+
+            move.score = _minimaxCalcBestPath(((marker === "O") ? "X" : "O"), original_marker, board).score;
+
+            board[y][x] = move.movement;
+
+            currentPath.push(move);
+        }
+
+        let bestMovement;
+
+        if(marker === original_marker)
+        {
+            let bestScore = -10000;
+            for(let i = 0; i < currentPath.length; i++)
             {
-                for(let y = 0; y < 3; y++)
+                if(currentPath[i].score > bestScore)
                 {
-                    if(!gameBoardController.hasMarker(x, y))
-                    {
-                        if(gameController.checkVictory(x, y, marker))
-                        {
-                            nextMove = [];
-                            nextMove.push(x);
-                            nextMove.push(y);
-                            break winloop;
-                        }
-                    }
+                    bestMovement = i;
+                    bestScore = currentPath[i].score;
                 }
             }
-
-            // check for enemy win
-            let enemyMarker = (marker === "O") ? "X" : "O";
-            loseloop: for(let z = 0; z < 3; z++)
+        } else {
+            let bestScore = 10000;
+            for(let i = 0; i < currentPath.length; i++)
             {
-                for(let m = 0; m < 3; m++)
+                if(currentPath[i].score < bestScore)
                 {
-                    if(!gameBoardController.hasMarker(z, m))
-                    {
-                        if(gameController.checkVictory(z, m, enemyMarker))
-                        {
-                            nextMove = [];
-                            nextMove.push(z);
-                            nextMove.push(m);
-                            break loseloop;
-                        }
-                    }
+                    bestMovement = i;
+                    bestScore = currentPath[i].score;
                 }
-            }
-
-            if(nextMove !== null)
-            {
-                return nextMove;
-            } else {
-                nextMove = _nextRandomPosition();
-                while(nextMove == undefined || nextMove == null)
-                {
-                    nextMove = _nextRandomPosition();
-                }
-                return nextMove;
             }
         }
+
+        return currentPath[bestMovement];
+    }
+
+    const _replicateCurrentBoard = (board) =>
+    {
+        let newArray = [[]];
+        for(let i = 0; i < board.length; i++)
+        {
+            newArray[i] = board[i].slice();
+        }
+
+        return newArray;
     }
 
     const _nextRandomPosition = () => {
@@ -574,11 +606,11 @@ const mainController = (function(doc) {
             }
 
             target.textContent = currentPlayer.playerMarker;
-            if(gameController.checkVictory(posX, posY, currentPlayer.playerMarker))
+            if(gameController.checkVictory(currentPlayer.playerMarker, gameBoardController.getCurrentBoard()))
             {
                 gameController.executeVictory(currentPlayer);
                 _notifyVictory(currentPlayer);
-            } else if(gameController.checkTie())
+            } else if(gameController.checkTie(gameBoardController.getCurrentBoard()))
             {
                 gameController.gameTied();
                 gameCaption.textContent = `It's a tie!`;
